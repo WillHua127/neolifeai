@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NeoLife.ai - Simulating the Future of Medicine</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="https://placehold.co/32x32/ec4899/ffffff?text=N" type="image/png">
+
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="color-scheme" content="light" />
+
+  <style>
+    /* ===== Brand & Base ===== */
+    :root{
+      /* pointer spotlight position (percentage) */
+      --mx: 50%;
+      --my: 30%;
+      --orb-1: rgba(236,72,153,0.12);   /* pink-500 */
+      --orb-2: rgba(217,70,239,0.12);   /* fuchsia-500 */
+      --orb-3: rgba(244,63,94,0.10);    /* rose-500 */
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Roboto Mono', monospace;
+      color: #374151; /* gray-700 */
+      background: #fff; /* hard white base */
+    }
+    .section-title { color: #1f2937; } /* gray-800 */
+
+    /* ===== GPT5-style white/pink interactive background ===== */
+    /* Layer 1: pointer-reactive soft radial gradients */
+    #interactive-bg {
+      position: fixed; inset: 0; z-index: -10;
+      background:
+        radial-gradient(650px 650px at var(--mx) var(--my), var(--orb-1), transparent 60%),
+        radial-gradient(800px 800px at calc(var(--mx) * 1.15) calc(var(--my) * .9), var(--orb-2), transparent 65%),
+        radial-gradient(700px 700px at calc(var(--mx) * .85) calc(var(--my) * 1.15), var(--orb-3), transparent 62%),
+        linear-gradient(#ffffff, #ffffff);
+      filter: saturate(1.05);
+      transition: background-position .15s linear;
+    }
+    /* Layer 2: slow-floating blurred color orbs (ambient motion) */
+    .bg-orb { position: absolute; border-radius: 9999px; filter: blur(60px); opacity: .55; }
+    .orb-1 { width: 60vw; aspect-ratio: 1; background: #fce7f3; left: -12vw; top: -10vh; animation: float 16s ease-in-out infinite; }
+    .orb-2 { width: 50vw; aspect-ratio: 1; background: #fae8ff; right: -10vw; top: 20vh; animation: float 20s ease-in-out infinite; }
+    .orb-3 { width: 40vw; aspect-ratio: 1; background: #ffe4e6; left: 20vw; bottom: -15vh; animation: float 22s ease-in-out infinite; }
+
+    @keyframes float { 0% { transform: translateY(0) translateX(0) } 50% { transform: translateY(-18px) translateX(12px) } 100% { transform: translateY(0) translateX(0) } }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .bg-orb { animation: none; }
+    }
+
+    /* Cards & CTAs */
+    .feature-card {
+      background-color: #ffffff;
+      border: 1px solid #fce7f3; /* pink-100 */
+      transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px -10px rgba(236,72,153,.15);
+      border-color: #f9a8d4; /* pink-300 */
+    }
+    .cta-button { transition: transform .2s ease, box-shadow .2s ease; }
+    .cta-button:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 8px 24px -10px rgba(236,72,153,.35); }
+
+    /* Gradient text accent */
+    .hero-gradient-text {
+      background: linear-gradient(45deg, #d946ef, #ec4899);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* Pretty scrollbars (WebKit) */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #f9a8d4; border-radius: 9999px; }
+    ::-webkit-scrollbar-track { background: #fff; }
+  </style>
+</head>
+<body class="antialiased">
+  <!-- ===== Interactive Background Layers ===== -->
+  <div id="interactive-bg" aria-hidden="true"></div>
+  <div aria-hidden="true" class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+  </div>
+
+  <!-- ===== Header ===== -->
+  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+    <nav class="container mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#" class="text-2xl font-bold text-gray-800">NeoLife<span class="text-pink-500">.ai</span></a>
+
+      <button id="menu-toggle" class="md:hidden text-gray-800 focus:outline-none" aria-label="Toggle Menu" aria-expanded="false">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+      </button>
+
+      <div class="hidden md:flex items-center space-x-8">
+        <a href="#technology" class="text-gray-600 hover:text-pink-500 transition-colors">Technology</a>
+        <a href="#mission" class="text-gray-600 hover:text-pink-500 transition-colors">Mission</a>
+        <a href="#gemini-ask" class="text-gray-600 hover:text-pink-500 transition-colors">AI Q&A</a>
+        <a href="#about" class="text-gray-600 hover:text-pink-500 transition-colors">About Us</a>
+        <a href="#contact" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold px-4 py-2 rounded-lg cta-button">Contact Us</a>
+      </div>
+    </nav>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 bg-white/90 backdrop-blur">
+      <div class="container mx-auto px-6 py-4 grid gap-3">
+        <a href="#technology" class="text-gray-700 hover:text-pink-500">Technology</a>
+        <a href="#mission" class="text-gray-700 hover:text-pink-500">Mission</a>
+        <a href="#gemini-ask" class="text-gray-700 hover:text-pink-500">AI Q&A</a>
+        <a href="#about" class="text-gray-700 hover:text-pink-500">About Us</a>
+        <a href="#contact" class="text-pink-600 font-semibold">Contact Us →</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Main ===== -->
+  <main>
+    <!-- Hero -->
+    <section class="py-20 md:py-32 text-center">
+      <div class="container mx-auto px-6">
+        <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
+          Simulating All Biological Entities<br />
+          <span class="hero-gradient-text">For Next-Generation Treatments.</span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-500 max-w-3xl mx-auto mb-8">
+          NeoLife.ai is pioneering AI-powered platforms to simulate biology and design novel therapeutics—making medical research faster, safer, and more precise than ever before.
+        </p>
+        <div class="flex justify-center gap-4">
+          <a href="#technology" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-8 rounded-lg text-lg cta-button">Discover Our Tech</a>
+          <a href="#contact" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-8 rounded-lg text-lg cta-button">Partner With Us</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technology -->
+    <section id="technology" class="py-20 bg-pink-50/50">
+      <div class="container mx-auto px-6">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold section-title">AI Clinical Virtual Humans</h2>
+          <p class="text-gray-500 mt-2 max-w-2xl mx-auto">Our virtual humans are sophisticated simulations of human biology, designed to predict how a new drug or therapy will affect a real person.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Speed -->
+          <div class="feature-card p-8 rounded-xl text-center">
+            <div class="flex justify-center mb-4"><svg class="w-16 h-16 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Accelerate Discovery</h3>
+            <p class="text-gray-600">Run thousands of trial variations in days, not years. Drastically reduce the time from lab to market for life-saving treatments.</p>
+          </div>
+          <!-- Safety -->
+          <div class="feature-card p-8 rounded-xl text-center">
+            <div class="flex justify-center mb-4"><svg class="w-16 h-16 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Enhance Safety & Ethics</h3>
+            <p class="text-gray-600">Eliminate the risk to human volunteers. Our virtual trials provide a completely ethical alternative to traditional testing phases.</p>
+          </div>
+          <!-- Precision -->
+          <div class="feature-card p-8 rounded-xl text-center">
+            <div class="flex justify-center mb-4"><svg class="w-16 h-16 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg></div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Unprecedented Precision</h3>
+            <p class="text-gray-600">Model diverse populations and rare genetic conditions with high fidelity, leading to more effective and personalized medicine.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Antibody Design -->
+    <section id="antibody-design" class="py-20">
+      <div class="container mx-auto px-6 flex flex-col md:flex-row-reverse items-center gap-12">
+        <div class="md:w-1/2">
+          <img src="https://placehold.co/600x400/fdf2f8/d946ef?text=Antibody+Modeling" alt="AI modeling of an antibody structure" class="rounded-xl shadow-xl w-full" loading="lazy">
+        </div>
+        <div class="md:w-1/2">
+          <h2 class="text-3xl md:text-4xl font-bold section-title mb-4">Next Frontier: AI Antibody Design</h2>
+          <p class="text-gray-600 text-lg mb-4">Beyond simulation, our platform is engineered to design novel therapeutics. We are applying generative AI to create highly specific and effective antibody candidates from the ground up.</p>
+          <p class="text-gray-600">By optimizing for binding affinity, stability, and low immunogenicity in silico, we dramatically shorten the discovery and development timeline for next-generation antibody drugs, targeting diseases with unprecedented precision.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mission -->
+    <section id="mission" class="py-20 bg-pink-50/50">
+      <div class="container mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
+        <div class="md:w-1/2">
+          <img src="https://placehold.co/600x400/fdf2f8/ec4899?text=Biological+Simulation" alt="Abstract simulation of biological data" class="rounded-xl shadow-xl w-full" loading="lazy">
+        </div>
+        <div class="md:w-1/2">
+          <h2 class="text-3xl md:text-4xl font-bold section-title mb-4">Our Grand Mission</h2>
+          <p class="text-gray-600 text-lg mb-4">At NeoLife.ai (拟生科技), our vision extends beyond clinical trials. We aim to become the architects of digital biology.</p>
+          <p class="text-gray-600 mb-4">Our ultimate goal is to simulate all biological entities, from a single cell to a complete ecosystem. By creating these 'digital twins,' we can unlock profound insights into life itself, revolutionizing everything from medicine and agriculture to environmental science.</p>
+          <p class="text-gray-600 font-semibold">The AI Virtual Human is our first, critical step toward this future.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Q&A -->
+    <section id="gemini-ask" class="py-20">
+      <div class="container mx-auto px-6">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold section-title">Explore Our Science</h2>
+          <p class="text-gray-500 mt-2 max-w-2xl mx-auto">Curious about how it all works? Ask a question and get an instant explanation from our knowledgeable AI assistant.</p>
+        </div>
+        <div class="max-w-3xl mx-auto">
+          <div class="flex flex-col sm:flex-row gap-4">
+            <input type="text" id="user-question" class="flex-grow bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter your question here..." />
+            <button id="ask-gemini-btn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg cta-button flex items-center justify-center">
+              <span id="btn-text">✨ Get Instant Answer</span>
+              <svg id="btn-loader" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+          </div>
+          <div id="gemini-response" class="mt-8 p-6 bg-white border border-pink-100 rounded-lg min-h-[100px] shadow-inner">
+            <p class="text-gray-500">Your answer will appear here...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="py-20 bg-pink-50/50">
+      <div class="container mx-auto px-6 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold section-title mb-4">Who We Are</h2>
+        <p class="text-gray-600 max-w-3xl mx-auto">NeoLife.ai was founded by a diverse team of leading experts in artificial intelligence, computational biology, and medicine. We are scientists, engineers, and visionaries united by a single, audacious goal: to model life in silico. Our work is built on a foundation of rigorous science and an unwavering commitment to improving human health and understanding our world.</p>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="py-20">
+      <div class="container mx-auto px-6 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Shape the Future With Us</h2>
+        <p class="text-gray-500 max-w-2xl mx-auto mb-8">We are looking for partners, researchers, and investors who share our passion for innovation. If you're ready to be part of the next great leap in science and technology, we want to hear from you.</p>
+        <a href="mailto:contact@neolife.ai" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-10 rounded-lg text-xl cta-button">Get In Touch</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200">
+    <div class="container mx-auto px-6 py-8 text-center text-gray-500">
+      <p>&copy; 2024 NeoLife.ai (拟生科技). All Rights Reserved.</p>
+      <div class="flex justify-center space-x-6 mt-4">
+        <a href="#" class="hover:text-pink-500">Twitter</a>
+        <a href="#" class="hover:text-pink-500">LinkedIn</a>
+        <a href="#" class="hover:text-pink-500">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating "Ask Neo" button (optional quick access to Q&A) -->
+  <button id="ask-neo-fab" title="Ask Neo" class="fixed bottom-6 right-6 z-40 bg-pink-500 hover:bg-pink-600 text-white rounded-full shadow-lg cta-button w-14 h-14 grid place-items-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-8 4h10"/></svg>
+  </button>
+
+  <script>
+    // ===== Pointer-reactive background =====
+    const root = document.documentElement;
+    const bg = document.getElementById('interactive-bg');
+
+    function setPointerVars(x, y) {
+      // Convert to percentage for CSS radial centers
+      const px = (x / window.innerWidth) * 100;
+      const py = (y / window.innerHeight) * 100;
+      root.style.setProperty('--mx', px.toFixed(2) + '%');
+      root.style.setProperty('--my', py.toFixed(2) + '%');
+    }
+
+    // Initial center
+    setPointerVars(window.innerWidth * 0.5, window.innerHeight * 0.3);
+
+    // Update on pointer move
+    window.addEventListener('pointermove', (e) => {
+      setPointerVars(e.clientX, e.clientY);
+    });
+
+    // On scroll, subtly shift background to create parallax feel
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const py = 30 + Math.min(20, scrollY / 50); // 30% → 50%
+      root.style.setProperty('--my', py.toFixed(2) + '%');
+    }, { passive: true });
+
+    // ===== Mobile menu toggle =====
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (menuToggle && mobileMenu) {
+      menuToggle.addEventListener('click', () => {
+        const isOpen = !mobileMenu.classList.contains('hidden');
+        mobileMenu.classList.toggle('hidden');
+        menuToggle.setAttribute('aria-expanded', String(!isOpen));
+      });
+    }
+
+    // ===== Quick access FAB to scroll to Q&A =====
+    document.getElementById('ask-neo-fab')?.addEventListener('click', () => {
+      document.getElementById('gemini-ask')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // ===== Q&A logic (Demo-first, Gemini-ready) =====
+    const askButton = document.getElementById('ask-gemini-btn');
+    const questionInput = document.getElementById('user-question');
+    const responseBox = document.getElementById('gemini-response');
+    const btnText = document.getElementById('btn-text');
+    const btnLoader = document.getElementById('btn-loader');
+
+    askButton.addEventListener('click', handleAsk);
+    questionInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') handleAsk(); });
+
+    async function handleAsk() {
+      const userQuestion = questionInput.value.trim();
+      if (!userQuestion) { responseBox.innerHTML = '<p class="text-yellow-600">Please enter your question.</p>'; return; }
+
+      // Loading UI
+      btnText.classList.add('hidden');
+      btnLoader.classList.remove('hidden');
+      askButton.disabled = true;
+      responseBox.innerHTML = '<p class="text-gray-500">AI is thinking, please wait...</p>';
+
+      const companyContext = `You are an AI assistant for a company called NeoLife.ai (Chinese name: 拟生科技). Your mission: pioneer AI Clinical Virtual Humans to replace traditional human trials; design novel therapeutics with generative AI; ultimately simulate all biological entities from a single cell to an ecosystem. Answer in a professional, optimistic, visionary tone.`;
+      const prompt = `${companyContext}\n\nUser Question: "${userQuestion}"`;
+
+      // IMPORTANT: Demo-first. If no API key, we simulate a helpful answer so the UI always works.
+      const apiKey = ""; // put a real Gemini API key here only in server-side deployment
+
+      try {
+        if (!apiKey) {
+          // Demo response
+          await new Promise(r => setTimeout(r, 600));
+          const demo = `Here\'s a high-level view based on NeoLife\'s platform: \n\n• We model patient-specific biology using multi-omic priors, mechanistic constraints, and large-scale simulations.\n• For your question (\"${userQuestion}\"), we would run in silico perturbations across virtual cohorts, compare predicted efficacy/toxicity, and rank hypotheses for validation.\n• Outputs include responder stratification, biomarker proposals, and design-space recommendations for safer, faster trials.`;
+          responseBox.innerHTML = `<p class="whitespace-pre-wrap text-gray-800">${demo}</p>`;
+          return; // Skip real call in demo
+        }
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = { contents: [{ role: 'user', parts: [{ text: prompt }] }] };
+        const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!resp.ok) throw new Error(`API request failed with status: ${resp.status}`);
+        const data = await resp.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.';
+        responseBox.innerHTML = `<p class=\"text-gray-800 whitespace-pre-wrap\">${text}</p>`;
+      } catch (err) {
+        console.error(err);
+        responseBox.innerHTML = '<p class="text-red-500">Sorry, the AI assistant is currently unavailable. Please try again later.</p>';
+      } finally {
+        btnText.classList.remove('hidden');
+        btnLoader.classList.add('hidden');
+        askButton.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
